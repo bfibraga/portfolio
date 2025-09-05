@@ -7,12 +7,11 @@ type NavbarProps = {
 export function Navbar({}: NavbarProps) {
   return (
     <nav
-      className={`h-15 w-5/6
-                      mx-auto
+      className={`h-15 w-3/5
                       mt-1
                       bg-background/30 backdrop-blur-lg 
                       rounded-lg 
-                      outline outline-1 outline-border
+                      outline-1 outline-border
                       flex 
                       justify-end items-center gap-2 
                       p-2 
