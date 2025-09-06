@@ -3,7 +3,11 @@ import MatrixRainingBackground from "@/components/matrix-raining-background";
 import { useThemeStore } from "@/stores/theme";
 import { useMatrixStore } from "@/stores/matrix";
 import Navbar from "@/components/navbar";
-import TransparentCard from "./components/ui/transparent-card";
+// import TransparentCard from "@/components/ui/transparent-card";
+import Heropage from "@/components/heropage";
+import Projects from "@/components/projects";
+import Experience from "@/components/experience";
+import Contact from "@/components/contact";
 
 function App() {
   const theme = useThemeStore((state) => state.theme);
@@ -13,12 +17,13 @@ function App() {
     <ThemeProvider>
       <div className="h-screen w-screen">
         <MatrixRainingBackground
-          className="bg-background h-full w-full absolute inset-0"
           {...matrixProps}
+          className="bg-background h-full w-full absolute inset-0"
+          yapanese
         />
-        <div className="w-full p-1 relative flex flex-col items-center gap-2">
+        <div className="w-full h-full p-1 relative flex flex-col items-center gap-2">
           <Navbar />
-          <TransparentCard
+          {/* <TransparentCard
             className={`
             w-3/5
             h-[calc(100%-60px)] 
@@ -34,7 +39,11 @@ function App() {
                 digital world.
               </p>
             </div>
-          </TransparentCard>
+          </TransparentCard> */}
+          <Heropage />
+          <Projects />
+          <Experience />
+          <Contact />
         </div>
       </div>
     </ThemeProvider>

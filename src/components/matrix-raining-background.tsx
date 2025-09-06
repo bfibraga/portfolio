@@ -11,7 +11,7 @@ interface MatrixRainingBackgroundProps {
 }
 
 function MatrixRainingBackground({
-  color = "#0f0",
+  color = "#aff",
   backgroundColor = "rgba(0, 0, 0, 0.04)",
   speed = 25,
   density = 20,
