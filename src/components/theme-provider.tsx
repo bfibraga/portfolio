@@ -1,68 +1,35 @@
-import { Theme, ThemeProviderState } from "@/lib/types";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { useThemeStore } from "@/stores/theme";
-import { createContext, useContext, useEffect } from "react";
 
-export type ThemeProviderProps = {
-  children: React.ReactNode;
-  defaultTheme?: Theme;
-  storageKey?: string;
-};
+type Theme = "dark";
 
-const initialState: ThemeProviderState = {
-  theme: "system",
-  setTheme: () => null,
-};
+interface ThemeProviderState {
+  theme: Theme;
+}
 
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState>({ theme: "dark" });
 
-export function ThemeProvider({
-  children,
-  defaultTheme = "system",
-  storageKey = "vite-ui-theme",
-  ...props
-}: ThemeProviderProps) {
-  const { theme, setTheme } = useThemeStore();
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const theme = useThemeStore((state) => state.theme);
 
   useEffect(() => {
-    const root = window.document.documentElement;
-
-    root.classList.remove("light", "dark");
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
-
-      root.classList.add(systemTheme);
-      return;
-    }
-
-    root.classList.add(theme);
+    document.documentElement.classList.remove("light", "system");
+    document.documentElement.classList.add("dark");
   }, [theme]);
 
-  const value = {
-    theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
-    },
-  };
-
   return (
-    <ThemeProviderContext.Provider {...props} value={value}>
+    <ThemeProviderContext value={{ theme }}>
       {children}
-    </ThemeProviderContext.Provider>
+    </ThemeProviderContext>
   );
 }
 
-export const currentTheme = () => localStorage.getItem("vite-ui-theme");
+export const useTheme = () => useContext(ThemeProviderContext);
 
-export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
-
-  if (context === undefined)
-    throw new Error("useTheme must be used within a ThemeProvider");
-
-  return context;
-};
+export function currentTheme(): Theme {
+  return "dark";
+}
