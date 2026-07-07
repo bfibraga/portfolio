@@ -1,26 +1,38 @@
-import { JSX, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 interface MatrixRainingBackgroundProps {
   color?: string;
   backgroundColor?: string;
-  speed?: number; // frames per second
-  density?: number;
-  yapanese?: boolean;
+  speed?: number;
   hoverColor?: string;
   hoverRadius?: number;
+  charset?: "hiragana" | "binary" | "hex" | "mix";
+}
+
+const HIRAGANA = "あいうえおかきくけこさしすせそたちつてと";
+const BINARY = "01";
+const HEX = "0123456789ABCDEF";
+const MIX = "アイウエオカキクケコサシスセソタチツテト0123456789ABCDEF";
+
+function getCharset(type: MatrixRainingBackgroundProps["charset"]): string {
+  switch (type) {
+    case "binary": return BINARY;
+    case "hex": return HEX;
+    case "hiragana": return HIRAGANA;
+    case "mix": return MIX;
+    default: return MIX;
+  }
 }
 
 function MatrixRainingBackground({
-  color = "#aff",
-  backgroundColor = "rgba(0, 0, 0, 0.04)",
+  color = "#00d4ff",
+  backgroundColor = "transparent",
   speed = 25,
-  density = 20,
-  yapanese = false,
-  hoverColor = "#fff",
+  hoverColor = "#ffffff",
   hoverRadius = 80,
+  charset = "mix",
   ...props
-}: MatrixRainingBackgroundProps &
-  React.HTMLProps<HTMLCanvasElement>): JSX.Element {
+}: MatrixRainingBackgroundProps & React.HTMLProps<HTMLCanvasElement>) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mouseRef = useRef<{ x: number; y: number; active: boolean }>({
     x: -9999,
@@ -35,55 +47,72 @@ function MatrixRainingBackground({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const chars = getCharset(charset);
+    const charArray = chars.split("");
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
-    let columns = Math.floor(width / 20); // Number of columns based on character width
-    const characters = yapanese
-      ? "あいうえおかきくけこさしすせそたちつてと"
-      : "abcdefghijklmnopqrstuvwxyz0123456789";
-    const charArray = characters.split("");
+    let fontSize = Math.max(14, Math.floor(width / 80));
+    let columns = Math.floor(width / fontSize);
     let drops: number[] = [];
+    const neonColors = ["#00d4ff", "#00fff0", "#ff00ff", "#00d4ff"];
+    const glitchColumns: Map<number, number> = new Map();
 
-    // Initialize drops
     for (let i = 0; i < columns; i++) {
-      drops[i] = 1;
+      drops[i] = Math.floor(Math.random() * -height / fontSize);
     }
 
-    let frameRate = speed; // frames per second
+    const frameRate = speed;
     let lastFrameTime = Date.now();
     let animationId: number | null = null;
 
     const draw = () => {
-      // Create a translucent rectangle to create the fading effect
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(0, 0, width, height);
+      if (backgroundColor === "transparent") {
+        ctx.clearRect(0, 0, width, height);
+      } else {
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, width, height);
+      }
 
-      ctx.font = "15px monospace";
+      ctx.font = `${fontSize}px monospace`;
+
+      if (Math.random() < 0.002) {
+        const col = Math.floor(Math.random() * columns);
+        glitchColumns.set(col, Date.now() + 100);
+      }
 
       for (let i = 0; i < drops.length; i++) {
-        const x = i * 20;
-        const y = drops[i] * 20;
-        const text = charArray[Math.floor(Math.random() * charArray.length)];
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
 
-        // determine color based on distance to mouse
+        const isGlitching = glitchColumns.has(i) && glitchColumns.get(i)! > Date.now();
+
         const dx = mouseRef.current.x - x;
         const dy = mouseRef.current.y - y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (mouseRef.current.active && dist < hoverRadius) {
-          // interpolate a simple highlight (hoverColor)
-          ctx.fillStyle = hoverColor;
-        } else {
-          ctx.fillStyle = color;
+        const nearMouse = mouseRef.current.active && dist < hoverRadius;
+
+        const leadChar = charArray[Math.floor(Math.random() * charArray.length)];
+        ctx.fillStyle = isGlitching ? "#ffffff" : nearMouse ? hoverColor : neonColors[0];
+        ctx.fillText(leadChar, x, y);
+
+        for (let j = 1; j < 6; j++) {
+          const trailY = y - j * fontSize;
+          if (trailY < 0) break;
+          const trailChar = charArray[Math.floor(Math.random() * charArray.length)];
+          const neonColor = isGlitching ? "#ffffff" : neonColors[Math.floor(Math.random() * neonColors.length)];
+          const alpha = Math.max(0.05, 1 - j * 0.15);
+          ctx.fillStyle = `${neonColor}${Math.floor(alpha * 255).toString(16).padStart(2, "0")}`;
+          ctx.fillText(trailChar, x, trailY);
         }
 
-        ctx.fillText(text, x, y);
-
-        // Reset drops when it reaches the bottom of the canvas
-        if (drops[i] * 20 > height && Math.random() > 0.975) {
+        if (drops[i] * fontSize > height && Math.random() > 0.975) {
           drops[i] = 0;
         }
-
         drops[i]++;
+      }
+
+      for (const [col, expiry] of glitchColumns) {
+        if (Date.now() > expiry) glitchColumns.delete(col);
       }
     };
 
@@ -91,7 +120,6 @@ function MatrixRainingBackground({
       const currentTime = Date.now();
       const elapsedTime = currentTime - lastFrameTime;
 
-      // Update the animation only if enough time has passed
       if (elapsedTime > 1000 / frameRate) {
         draw();
         lastFrameTime = currentTime;
@@ -100,13 +128,11 @@ function MatrixRainingBackground({
       animationId = requestAnimationFrame(animate);
     };
 
-    // mouse handlers on canvas
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       mouseRef.current.x = e.clientX - rect.left;
       mouseRef.current.y = e.clientY - rect.top;
       mouseRef.current.active = true;
-      console.log(mouseRef.current);
     };
 
     const handlePointerLeave = () => {
@@ -128,43 +154,41 @@ function MatrixRainingBackground({
 
     animate();
 
-    // Update canvas dimensions on window resize
     const handleResize = () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
-      columns = Math.floor(width / 20);
+      fontSize = Math.max(14, Math.floor(width / 80));
+      columns = Math.floor(width / fontSize);
       drops = [];
       for (let i = 0; i < columns; i++) {
-        drops[i] = 1;
+        drops[i] = Math.floor(Math.random() * -height / fontSize);
       }
     };
 
-    // Check if the user is on a mobile device before handling resize events
-    const isMobileDevice = /Mobi/i.test(window.navigator.userAgent);
-    if (!isMobileDevice) {
+    if (!/Mobi/i.test(window.navigator.userAgent)) {
       window.addEventListener("resize", handleResize);
     }
 
     return () => {
-      // cleanup
       if (animationId) cancelAnimationFrame(animationId);
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("mouseleave", handlePointerLeave);
       canvas.removeEventListener("touchend", handlePointerLeave);
-      if (!isMobileDevice) {
+      if (!/Mobi/i.test(window.navigator.userAgent)) {
         window.removeEventListener("resize", handleResize);
       }
     };
-  }, [color, backgroundColor, yapanese, speed, hoverColor, hoverRadius]);
+  }, [color, backgroundColor, speed, hoverColor, hoverRadius, charset]);
 
   return (
     <canvas
-      className={`matrix-canvas fixed top-0 left-0 z-[-1]`}
+      className="fixed inset-0 z-0"
       ref={canvasRef}
+      style={{ background: "transparent" }}
       {...props}
     />
   );
 }
 
 export type { MatrixRainingBackgroundProps };
-export { MatrixRainingBackground as default };
+export default MatrixRainingBackground;
