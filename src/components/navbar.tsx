@@ -1,41 +1,29 @@
-// import { ModeToggle } from "./mode-toggle";
 import { Button } from "./ui/button";
 
-type NavbarProps = {
-  // Add any props you want to pass to the Navbar component
-};
+const navItems = [
+  { href: "#home", label: "HOME" },
+  { href: "#projects", label: "PROJECTS" },
+  { href: "#experience", label: "EXPERIENCE" },
+  { href: "#contact", label: "CONTACT" },
+];
 
-export function Navbar({}: NavbarProps) {
+export function Navbar() {
   return (
-    <nav
-      className={`h-15 md:w-3/5
-                      w-full
-                      mt-1
-                      bg-background/30 backdrop-blur-lg 
-                      rounded-lg 
-                      outline-1 outline-border
-                      flex 
-                      justify-between items-center gap-2 
-                      p-2
-                      z-[1]`}
-    >
-      <div className="flex-1 flex justify-center">
-        <Button variant="ghost" asChild>
-          <a href="#home">Home</a>
-        </Button>
-        <Button variant="ghost" asChild>
-          <a href="#projects">Projects</a>
-        </Button>
-        <Button variant="ghost" asChild>
-          <a href="#experience">Experience</a>
-        </Button>
-        <Button variant="ghost" asChild>
-          <a href="#contact">Contact</a>
-        </Button>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90" style={{ boxShadow: "0 2px 10px color-mix(in srgb, var(--primary) 40%, transparent)" }}>
+      <div className="flex items-center justify-between px-4 py-3 md:px-8">
+        <span className="font-ui text-primary text-lg tracking-widest">
+          {">}_PORTFOLIO.EXE"}
+        </span>
+        <div className="flex gap-1">
+          {navItems.map((item) => (
+            <a key={item.href} href={item.href}>
+              <Button variant="ghost" className="font-ui text-base tracking-wider hover:text-primary hover:drop-shadow-[0_0_8px_var(--primary)]">
+                {item.label}
+              </Button>
+            </a>
+          ))}
+        </div>
       </div>
-      {/* <div className="relative flex justify-end">
-        <ModeToggle />
-      </div> */}
     </nav>
   );
 }
