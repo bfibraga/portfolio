@@ -9,11 +9,8 @@ export function TransparentCard({ children, ...props }: TransparentCardProps) {
     <Card
       {...props}
       className={
-        `
-        bg-background/30 backdrop-blur-lg
-        border border-transparent 
-        outline-1 outline-border
-        ` + (props.className ? ` ${props.className}` : "")
+        `bg-card border border-primary/40 text-card-foreground transition-all duration-300 hover:border-primary hover:shadow-[0_0_15px_color-mix(in_srgb,var(--primary)_30%,transparent)] shadow-[0_0_8px_color-mix(in_srgb,var(--primary)_20%,transparent)]` +
+        (props.className ? ` ${props.className}` : "")
       }
     >
       {children}
